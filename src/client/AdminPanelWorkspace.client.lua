@@ -243,7 +243,7 @@ Title.Font=Enum.Font.GothamBold
 Title.Text="LIGHT ADMIN v2 • 34 features • FLY+NOCLIP ON START"
 Title.TextColor3=C.Text
 Title.TextSize=13
-Title.TextXAlignment=Left
+Title.TextXAlignment=Enum.TextXAlignment.Left
 
 local Sub = Instance.new("TextLabel", Top)
 Sub.BackgroundTransparency=1
@@ -253,7 +253,7 @@ Sub.Font=Enum.Font.Gotham
 Sub.Text="RightShift - hide | WASD Space Ctrl Shift (fast) | lightweight"
 Sub.TextColor3=C.Dim
 Sub.TextSize=11
-Sub.TextXAlignment=Left
+Sub.TextXAlignment=Enum.TextXAlignment.Left
 
 local HideBtn = Instance.new("TextButton", Top)
 HideBtn.Size=UDim2.fromOffset(32,30); HideBtn.AnchorPoint=Vector2.new(1,0.5); HideBtn.Position=UDim2.new(1,-12,0.5,0)
@@ -296,7 +296,7 @@ CoordsHud.Position=UDim2.new(0,16,1,-74)
 CoordsHud.Size=UDim2.fromOffset(320,52)
 CoordsHud.BackgroundColor3=Color3.fromRGB(14,16,24); CoordsHud.BackgroundTransparency=0.15
 CoordsHud.Font=Enum.Font.Code; CoordsHud.TextSize=13; CoordsHud.TextColor3=Color3.fromRGB(220,230,255)
-CoordsHud.TextXAlignment=Left; CoordsHud.Text=""
+CoordsHud.TextXAlignment=Enum.TextXAlignment.Left; CoordsHud.Text=""
 Instance.new("UICorner", CoordsHud).CornerRadius=UDim.new(0,8)
 local CP = Instance.new("UIPadding", CoordsHud); CP.PaddingLeft=UDim.new(0,10); CP.PaddingRight=UDim.new(0,10)
 
@@ -311,7 +311,7 @@ local function MakeCategory(name)
     local l = Instance.new("TextLabel", Scroll)
     l.Size=UDim2.new(1,-6,0,20)
     l.BackgroundTransparency=1
-    l.Font=Enum.Font.GothamBold; l.TextColor3=C.Blue; l.TextSize=12; l.TextXAlignment=Left
+    l.Font=Enum.Font.GothamBold; l.TextColor3=C.Blue; l.TextSize=12; l.TextXAlignment=Enum.TextXAlignment.Left
     l.Text="  "..name:upper()
     l.Name="CAT_"..name
     return l
@@ -325,7 +325,7 @@ local function MakeBtn(text, getActive, cb)
     b.Text="  "..text
     b.TextSize=13
     b.TextColor3=C.Text
-    b.TextXAlignment=Left
+    b.TextXAlignment=Enum.TextXAlignment.Left
     Instance.new("UICorner", b).CornerRadius=UDim.new(0,8)
     local s = Instance.new("UIStroke", b); s.Color=C.Stroke; s.Transparency=0.6
     b.MouseEnter:Connect(function() if not (getActive and getActive()) then b.BackgroundColor3=C.BtnHov end end)
