@@ -87,6 +87,24 @@ local CONFIG = {
 ### 🔗 GitHub -> Roblox Studio
 Ты уже привязал GitHub к Studio, так что просто делай Pull в Studio — файл обновится.
 
+Если используешь **GitHubSync Plugin**:
+- В настройках плагина включи `Rojo Mode` или `Use .client.lua Suffix`
+- Или вручную перемести файл после Pull
+
+### ❗ Фикс ошибки `attempt to index nil with 'WaitForChild' - Server - Line 18`
+Ты получил эту ошибку, потому что файл оказался в **Workspace** как **Script** (сервер), а должен быть в **StarterPlayerScripts** как **LocalScript** (клиент). На сервере `Players.LocalPlayer = nil`.
+
+**Как починить (1 мин):**
+1. В Explorer удали `Workspace > AdminPanel`
+2. Убедись что в `StarterPlayer > StarterPlayerScripts` лежит `AdminPanel.client` как **LocalScript** (иконка синяя, не серая)
+3. Если у тебя Rojo-структура, используй `src/client/AdminPanel.client.lua` -> он автоматом мапится в StarterPlayerScripts через `default.project.json`
+4. Нажми Play — ошибка пропала, панель появилась.
+
+**В v2.1 я пофиксил краш:**
+- Если скрипт по ошибке в Workspace, теперь не крашится, а пишет понятный warn: `must be a LocalScript, not Server Script! Move to StarterPlayerScripts`
+- Добавлен `RunService:IsClient()` guard + ожидание LocalPlayer до 10 сек
+- Добавлен `src/server/AntiCrash.server.lua` — он детектит misplaced скрипты и пишет в Output куда надо переместить
+
 ### 🧪 Тест
 После пула нажми Play — увидишь уведомление "Loaded! Fly+Noclip auto-start..." и сразу полетишь.
 
