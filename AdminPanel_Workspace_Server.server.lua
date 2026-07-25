@@ -1,9 +1,17 @@
 --[[ 
-    WORKSPACE SERVER VERSION v2.3 FIXED - Работает в Workspace как Server Script
+    WORKSPACE SERVER VERSION - Работает прямо в Workspace как Server Script (RunContext = Legacy)
     Поставь этот Script в Workspace и он будет работать без LocalScript.
 
-    Команды в чате: !fly, !noclip, !speed 100, !heal, !pos, !tp spawn, !platform
-    Fly+Noclip auto ON
+    Как работает: сервер дает всем игрокам noclip, speed, fly через BodyVelocity и команды в чате.
+    Команды в чате:
+    !fly - вкл/выкл полет
+    !noclip - вкл/выкл ноуклип
+    !speed 100 - скорость
+    !heal - хил
+    !tp spawn, !pos, !platform
+
+    Это дополнение к основной панели. Основная панель (AdminPanel.client.lua) работает если RunContext=Client.
+    А этот файл работает в любом случае в Workspace как Server Script.
 ]]
 
 local Players = game:GetService("Players")
@@ -32,14 +40,13 @@ local function isAdmin(plr)
     return ok and res
 end
 
-local playerState = {}
-local noclipConns = {} -- [character] = connection
-local flyConns = {} -- [player] = connection
-local flyObjects = {} -- [player] = {bv, bg}
+local playerState = {} -- [plr] = {fly, noclip, speed, flySpeed, checkpoint}
+local connections = {}
+local flyObjects = {} -- [char] = {bv, bg}
 
 local function getState(plr)
     if not playerState[plr] then
-        playerState[plr] = {fly=false, noclip=false, speed=1, flySpeed=CONFIG.BaseFlySpeed}
+        playerState[plr] = {fly=false, noclip=false, speed=1, flySpeed=CONFIG.BaseFlySpeed, checkpoint=nil}
     end
     return playerState[plr]
 end
@@ -47,15 +54,13 @@ end
 local function setNoclip(char, enabled)
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hum then return end
-    -- disconnect old
-    if noclipConns[char] then
-        noclipConns[char]:Disconnect()
-        noclipConns[char]=nil
-    end
+    -- Server noclip: disable collision each Stepped
+    local connName = char:GetDebugId().."_noclip"
+    if connections[connName] then connections[connName]:Disconnect(); connections[connName]=nil end
     if enabled then
-        noclipConns[char] = RunService.Stepped:Connect(function()
+        connections[connName] = RunService.Stepped:Connect(function()
             if not char.Parent then
-                if noclipConns[char] then noclipConns[char]:Disconnect(); noclipConns[char]=nil end
+                if connections[connName] then connections[connName]:Disconnect() end
                 return
             end
             for _, part in ipairs(char:GetDescendants()) do
@@ -67,18 +72,6 @@ local function setNoclip(char, enabled)
     end
 end
 
-local function clearFly(plr)
-    if flyObjects[plr] then
-        if flyObjects[plr].bv then flyObjects[plr].bv:Destroy() end
-        if flyObjects[plr].bg then flyObjects[plr].bg:Destroy() end
-        flyObjects[plr]=nil
-    end
-    if flyConns[plr] then
-        flyConns[plr]:Disconnect()
-        flyConns[plr]=nil
-    end
-end
-
 local function setFly(plr, enabled)
     local state = getState(plr)
     state.fly = enabled
@@ -87,44 +80,57 @@ local function setFly(plr, enabled)
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
     
-    clearFly(plr)
+    local id = char:GetDebugId()
+    if flyObjects[id] then
+        if flyObjects[id].bv then flyObjects[id].bv:Destroy() end
+        if flyObjects[id].bg then flyObjects[id].bg:Destroy() end
+        flyObjects[id]=nil
+    end
+    
+    local flyConn = id.."_fly"
+    if connections[flyConn] then connections[flyConn]:Disconnect(); connections[flyConn]=nil end
     
     if enabled then
         setNoclip(char, true)
         state.noclip = true
         local bv = Instance.new("BodyVelocity")
-        bv.Name = "WSFly_Vel"
         bv.MaxForce = Vector3.new(1e9,1e9,1e9)
         bv.Velocity = Vector3.zero
         bv.Parent = root
         local bg = Instance.new("BodyGyro")
-        bg.Name = "WSFly_Gyro"
         bg.MaxTorque = Vector3.new(1e9,1e9,1e9)
         bg.CFrame = root.CFrame
         bg.Parent = root
-        flyObjects[plr] = {bv=bv, bg=bg}
+        flyObjects[id] = {bv=bv, bg=bg}
         
-        flyConns[plr] = RunService.Heartbeat:Connect(function()
+        connections[flyConn] = RunService.Heartbeat:Connect(function()
             local c = plr.Character
             if not c then return end
             local r = c:FindFirstChild("HumanoidRootPart")
             local h = c:FindFirstChildOfClass("Humanoid")
             if not r or not h then return end
-            if not flyObjects[plr] then return end
             local md = h.MoveDirection
             local dir = Vector3.zero
             if md.Magnitude>0 then
+                -- Move in camera look? On server we use root look
                 dir += Vector3.new(md.X,0,md.Z)
+                -- Normalize
+                if dir.Magnitude>0 then dir = dir.Unit end
             end
+            -- Jump gives up, if humanoid is in freefall and MoveDirection Y? Use Jump bool
             if h.Jump then
                 dir += Vector3.new(0,1,0)
             end
+            -- Down: if player is pressing... we check if they chat !down or if they are sitting
+            -- For simplicity, Shift detection not possible server-side, so use attribute
             if h:GetAttribute("FlyDown") then
                 dir -= Vector3.new(0,1,0)
             end
+            
             if dir.Magnitude>0 then dir = dir.Unit end
-            flyObjects[plr].bv.Velocity = dir * state.flySpeed
-            flyObjects[plr].bg.CFrame = r.CFrame
+            bv.Velocity = dir * state.flySpeed
+            -- Keep orientation to where they look
+            bg.CFrame = r.CFrame
         end)
         print("[WS Admin] Fly ON for "..plr.Name)
     else
@@ -172,7 +178,7 @@ local function handleCommand(plr, msg)
         end
     elseif msg:sub(1,5)=="!down" then
         local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:SetAttribute("FlyDown", true); task.delay(0.5, function() if hum.Parent then hum:SetAttribute("FlyDown", false) end end) end
+        if hum then hum:SetAttribute("FlyDown", true); task.delay(0.5, function() hum:SetAttribute("FlyDown", false) end) end
     end
 end
 
@@ -184,23 +190,13 @@ Players.PlayerAdded:Connect(function(plr)
         local state = getState(plr)
         if state.noclip then setNoclip(char, true) end
         if state.fly then setFly(plr, true) end
+        -- Auto fly on start as requested
         if CONFIG.AllowStudio or isAdmin(plr) then
             task.delay(1, function()
                 if plr.Parent then
                     setFly(plr, true)
                 end
             end)
-        end
-        char.AncestryChanged:Connect(function()
-            if not char.Parent then
-                if noclipConns[char] then noclipConns[char]:Disconnect(); noclipConns[char]=nil end
-            end
-        end)
-    end)
-    plr.AncestryChanged:Connect(function()
-        if not plr.Parent then
-            clearFly(plr)
-            playerState[plr]=nil
         end
     end)
 end)
@@ -210,10 +206,11 @@ for _,plr in ipairs(Players:GetPlayers()) do
     plr.Chatted:Connect(function(msg) handleCommand(plr, msg) end)
     if plr.Character then
         task.defer(function()
+            local state=getState(plr)
             setNoclip(plr.Character, true)
             setFly(plr, true)
         end)
     end
 end
 
-print("[WS Admin] Workspace Server Admin v2.3 FIXED loaded! Commands: !fly, !noclip, !speed 100, !heal, !pos, !tp spawn, !platform. Fly+NoClip auto ON.")
+print("[WS Admin] Workspace Server Admin loaded! Commands: !fly, !noclip, !speed 100, !heal, !pos, !tp spawn, !platform. Fly+NoClip auto ON as requested.")
