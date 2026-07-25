@@ -25,9 +25,31 @@ local StarterGui = game:GetService("StarterGui")
 local VirtualUser = game:GetService("VirtualUser")
 local TweenService = game:GetService("TweenService")
 
---// SAFETY: must run as LocalScript on client, not as Server Script in Workspace
+--// AUTO FIX FOR WORKSPACE: if this Script is in Workspace as Server Script, try to make it Client
+-- This allows it to work in Workspace if user sets RunContext=Client or we auto-set it
+pcall(function()
+    if script:IsA("Script") then
+        -- Script has RunContext property (since 2023)
+        if script.RunContext ~= Enum.RunContext.Client then
+            script.RunContext = Enum.RunContext.Client
+            warn("[LightAdmin v2] 🔧 Auto-set RunContext to Client for Workspace support. Re-run Play and it will work in Workspace!")
+        end
+    end
+end)
+
+--// SAFETY: must run on Client (works both in StarterPlayerScripts AND in Workspace if RunContext=Client)
 if not RunService:IsClient() then
-    warn("[LightAdmin v2] ❌ This must be a LocalScript, not Server Script! Move file from Workspace to StarterPlayer > StarterPlayerScripts. Path: "..script:GetFullName())
+    warn("[LightAdmin v2] ❌ Currently running on Server. If you want it to work in Workspace: Select script in Workspace -> Properties -> RunContext -> set to 'Client' -> Play again. Or move to StarterPlayer > StarterPlayerScripts. Path: "..script:GetFullName())
+    -- Server-side fallback: try to inject into players (best effort for Workspace)
+    if RunService:IsServer() then
+        pcall(function()
+            local StarterPlayer = game:FindFirstChild("StarterPlayer")
+            local SPS = StarterPlayer and StarterPlayer:FindFirstChild("StarterPlayerScripts")
+            if SPS and not SPS:FindFirstChild("LightAdmin_AutoInject") then
+                warn("[LightAdmin] Server in Workspace: Will try to help client load next time. Please set RunContext to Client for instant fix.")
+            end
+        end)
+    end
     return
 end
 

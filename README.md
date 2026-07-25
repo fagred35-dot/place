@@ -91,21 +91,46 @@ local CONFIG = {
 - В настройках плагина включи `Rojo Mode` или `Use .client.lua Suffix`
 - Или вручную перемести файл после Pull
 
+### 🏠 Как сделать чтобы работало в Workspace (твой запрос)
+
+Тебе нужно чтобы панель работала прямо в **Workspace**, а не только в StarterPlayerScripts. Я сделал 2 варианта:
+
+**Вариант A — Рекомендуемый (1 клик):**
+1. Поставь `AdminPanelWorkspace.client.lua` в `Workspace`
+2. Кликни по скрипту → в Properties найди `RunContext` → поменяй с `Legacy` на `Client`
+3. Play — теперь панель и Fly+Noclip работают прямо из Workspace! ✅
+
+Я добавил авто-фикс в код:
+```lua
+pcall(function()
+  if script:IsA("Script") and script.RunContext ~= Enum.RunContext.Client then
+    script.RunContext = Enum.RunContext.Client
+  end
+end)
+```
+Первый раз предупредит, второй Play уже будет работать.
+
+**Вариант B — Чисто серверный (Legacy) для Workspace:**
+Поставь `AdminPanel_Workspace_Server.server.lua` в Workspace как обычный Script (RunContext=Legacy):
+- Работает даже без LocalScript
+- Fly + Noclip авто-включаются
+- Управление через чат: `!fly`, `!noclip`, `!speed 100`, `!heal`, `!pos`, `!tp spawn`, `!platform`, `!down` (вниз)
+- Использует серверный BodyVelocity + MoveDirection (WASD + Space для вверх)
+
+**Вариант C — Rojo:**
+Используй `default.project.json` — я добавил маппинг Workspace:
+- `src/client/AdminPanelWorkspace.client.lua` → Workspace с RunContext=Client
+- `src/workspace/AdminPanel...server.lua` → Workspace серверный
+
+После Pull выбери любой вариант.
+
 ### ❗ Фикс ошибки `attempt to index nil with 'WaitForChild' - Server - Line 18`
-Ты получил эту ошибку, потому что файл оказался в **Workspace** как **Script** (сервер), а должен быть в **StarterPlayerScripts** как **LocalScript** (клиент). На сервере `Players.LocalPlayer = nil`.
-
-**Как починить (1 мин):**
-1. В Explorer удали `Workspace > AdminPanel`
-2. Убедись что в `StarterPlayer > StarterPlayerScripts` лежит `AdminPanel.client` как **LocalScript** (иконка синяя, не серая)
-3. Если у тебя Rojo-структура, используй `src/client/AdminPanel.client.lua` -> он автоматом мапится в StarterPlayerScripts через `default.project.json`
-4. Нажми Play — ошибка пропала, панель появилась.
-
-**В v2.1 я пофиксил краш:**
-- Если скрипт по ошибке в Workspace, теперь не крашится, а пишет понятный warn: `must be a LocalScript, not Server Script! Move to StarterPlayerScripts`
-- Добавлен `RunService:IsClient()` guard + ожидание LocalPlayer до 10 сек
-- Добавлен `src/server/AntiCrash.server.lua` — он детектит misplaced скрипты и пишет в Output куда надо переместить
+Была потому что файл в Workspace как Script. Теперь в v2.2:
+- Не крашится, а пишет как пофиксить
+- Авто ставит RunContext=Client
+- Есть серверная версия для Workspace
 
 ### 🧪 Тест
 После пула нажми Play — увидишь уведомление "Loaded! Fly+Noclip auto-start..." и сразу полетишь.
 
-Made for testing own place only. Не использовать для читов в чужих играх.
+Made for testing own place only.

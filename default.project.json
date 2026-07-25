@@ -21,6 +21,19 @@
       "$className": "Workspace",
       "$properties": {
         "FilteringEnabled": true
+      },
+      "AdminPanel_Client": {
+        "$className": "Script",
+        "$properties": {
+          "RunContext": "Client",
+          "Source": "-- Will be replaced by Rojo\n-- For manual: put AdminPanelWorkspace.client.lua here and set RunContext=Client"
+        },
+        "AdminPanelInWorkspace": {
+          "$path": "src/client/AdminPanelWorkspace.client.lua"
+        }
+      },
+      "AdminPanel_Server": {
+        "$path": "src/workspace/AdminPanel_Workspace_Server.server.lua"
       }
     }
   }
