@@ -1,0 +1,14 @@
+# Roblox Studio cache
+.rbxl
+.rbxlx
+*.rbxl
+*.rbxlx
+logs/
+cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Arena tmp
+.arena/

@@ -1,0 +1,78 @@
+{
+  "name": "place",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "ZombieGame": {
+          "$className": "Folder",
+          "ZombieConfig": {
+            "$path": "src/shared/ZombieGame/ZombieConfig.lua"
+          },
+          "WeaponConfig": {
+            "$path": "src/shared/ZombieGame/WeaponConfig.lua"
+          }
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "AdminPanel": {
+          "$path": "src/client/AdminPanel.client.lua"
+        },
+        "WeaponClient": {
+          "$path": "src/client/ZombieGame/WeaponClient.client.lua"
+        },
+        "WaveHUD": {
+          "$path": "src/client/ZombieGame/WaveHUD.client.lua"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "AdminLoader": {
+        "$path": "src/server/AntiCrash.server.lua"
+      },
+      "ZombieGame": {
+        "$className": "Folder",
+        "MapBuilder": {
+          "$path": "src/server/ZombieGame/MapBuilder.server.lua"
+        },
+        "GameManager": {
+          "$path": "src/server/ZombieGame/GameManager.server.lua"
+        },
+        "ZombieSpawner": {
+          "$path": "src/server/ZombieGame/ZombieSpawner.server.lua"
+        },
+        "WeaponBuilder": {
+          "$path": "src/server/ZombieGame/WeaponBuilder.server.lua"
+        },
+        "WeaponHandler": {
+          "$path": "src/server/ZombieGame/WeaponHandler.server.lua"
+        }
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "FilteringEnabled": true
+      },
+      "AdminPanel_Client": {
+        "$className": "Script",
+        "$properties": {
+          "RunContext": "Client"
+        },
+        "AdminPanelInWorkspace": {
+          "$path": "src/client/AdminPanelWorkspace.client.lua"
+        }
+      },
+      "AdminPanel_Server": {
+        "$path": "src/workspace/AdminPanel_Workspace_Server.server.lua"
+      }
+    }
+  }
+}
